@@ -580,8 +580,9 @@ bool ClusterManagerImpl::removeCluster(const std::string& cluster_name) {
 void ClusterManagerImpl::loadCluster(const envoy::api::v2::Cluster& cluster,
                                      const std::string& version_info, bool added_via_api,
                                      ClusterMap& cluster_map) {
-  ClusterSharedPtr new_cluster =
+  std::pair<ClusterSharedPtr, ThreadAwareLoadBalancerPtr> new_cluster_pair =
       factory_.clusterFromProto(cluster, *this, outlier_event_logger_, added_via_api);
+  auto& new_cluster = new_cluster_pair.first;
 
   if (!added_via_api) {
     if (cluster_map.find(new_cluster->info()->name()) != cluster_map.end()) {
@@ -1087,6 +1088,7 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ClusterEntry::ClusterEntry(
                                                      parent.parent_.random_, cluster->lbConfig());
       break;
     }
+    case LoadBalancerType::ClusterProvided:
     case LoadBalancerType::RingHash:
     case LoadBalancerType::Maglev: {
       ASSERT(lb_factory_ != nullptr);
@@ -1234,7 +1236,7 @@ Tcp::ConnectionPool::InstancePtr ProdClusterManagerFactory::allocateTcpConnPool(
       new Tcp::ConnPoolImpl(dispatcher, host, priority, options, transport_socket_options)};
 }
 
-ClusterSharedPtr ProdClusterManagerFactory::clusterFromProto(
+std::pair<ClusterSharedPtr, ThreadAwareLoadBalancerPtr> ProdClusterManagerFactory::clusterFromProto(
     const envoy::api::v2::Cluster& cluster, ClusterManager& cm,
     Outlier::EventLoggerSharedPtr outlier_event_logger, bool added_via_api) {
   return ClusterFactoryImplBase::create(
