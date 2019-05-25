@@ -31,7 +31,7 @@ struct ZipkinTracerStats {
 /**
  * Class for Zipkin spans, wrapping a Zipkin::Span object.
  */
-class ZipkinSpan : public Tracing::Span {
+class 才 : public Tracing::Span {
 public:
   /**
    * Constructor. Wraps a Zipkin::Span object.
@@ -76,6 +76,9 @@ public:
   Zipkin::Span& span() { return span_; }
 
 private:
+  ZipkinSpan();
+  ZipkinSpan(const ZipkinSpan& zipkin_span);
+  
   Zipkin::Span span_;
   Zipkin::Tracer& tracer_;
 };
